@@ -10,7 +10,13 @@ export const env = {
   nodeEnv: process.env.NODE_ENV || 'production',
   port: Number(process.env.PORT || 3000),
   mongoUri: process.env.MONGODB_URI || 'mongodb+srv://yash:0RtRbEz7iuDbRcKI@ecommercepracticewebapp.e3upoww.mongodb.net/taskflow',
-  clientUrls: (process.env.CLIENT_URL || 'https://task-frontend-iota-ruby.vercel.app').split(',').map((v) => v.trim()),
+ clientUrls: (
+  process.env.CLIENT_URL || 'https://task-frontend-iota-ruby.vercel.app'
+)
+  .split(',')
+  .map((value) =>
+    value.trim().replace(/\/+$/, ''),
+  ),
   accessSecret: process.env.JWT_ACCESS_SECRET || 'development-access-secret-change-this-32',
   refreshSecret: process.env.JWT_REFRESH_SECRET || 'development-refresh-secret-change-this-32',
   accessExpires: process.env.ACCESS_TOKEN_EXPIRES || '15m',
