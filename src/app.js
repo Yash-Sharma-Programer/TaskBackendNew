@@ -23,45 +23,25 @@ import fileRoutes from './routes/file.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 
+const corsOptions = {
+  origin: (origin, callback) => {
+    const normalizedOrigin = origin?.replace(/\/+$/, '');
+    if (!normalizedOrigin || env.clientUrls.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Organisation-Id'],
+  optionsSuccessStatus: 204,
+};
+
 export const createApp = (io = null) => {
   const app = express(); app.set('trust proxy', 1);
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-  const corsOptions = {
-    origin(origin, callback) {
-      const normalizedOrigin = origin?.replace(/\/+$/, '');
-
-      if (
-        !origin ||
-        env.clientUrls.includes(normalizedOrigin)
-      ) {
-        return callback(null, true);
-      }
-
-      return callback(
-        new Error(`Origin ${origin} is not allowed by CORS`),
-      );
-    },
-
-    credentials: true,
-
-    methods: [
-      'GET',
-      'POST',
-      'PUT',
-      'PATCH',
-      'DELETE',
-      'OPTIONS',
-    ],
-
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Organisation-Id',
-    ],
-  };
-
   app.use(cors(corsOptions));
-  app.use(rateLimit({ windowMs: 60 * 1000, limit: 300, }));
+  app.use(rateLimit({ windowMs: 60 * 1000, limit: 300, standardHeaders: true, legacyHeaders: false }));
   app.use(express.json({ limit: '1mb' })); app.use(express.urlencoded({ extended: true, limit: '1mb' })); app.use(cookieParser()); app.use(mongoSanitize()); app.use(preventXss);
   if (env.nodeEnv !== 'test') app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
   app.use('/uploads', express.static(path.resolve('uploads'), { maxAge: env.nodeEnv === 'production' ? '7d' : 0 }));

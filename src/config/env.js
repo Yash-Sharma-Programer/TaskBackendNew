@@ -6,17 +6,22 @@ if (process.env.NODE_ENV === 'production') {
   if (missing.length) throw new Error(`Missing environment variables: ${missing.join(', ')}`);
 }
 
-export const env = {
-  nodeEnv: process.env.NODE_ENV || 'production',
-  port: Number(process.env.PORT || 3000),
-  mongoUri: process.env.MONGODB_URI || 'mongodb+srv://yash:0RtRbEz7iuDbRcKI@ecommercepracticewebapp.e3upoww.mongodb.net/taskflow',
- clientUrls: (
-  process.env.CLIENT_URL || 'https://task-frontend-iota-ruby.vercel.app'
-)
+const normalizeOrigin = (value) => value.trim().replace(/\/+$/, '');
+const configuredClientUrls = (process.env.CLIENT_URL || '')
   .split(',')
-  .map((value) =>
-    value.trim().replace(/\/+$/, ''),
-  ),
+  .map(normalizeOrigin)
+  .filter(Boolean);
+const clientUrls = [...new Set([
+  'http://localhost:5173',
+  'https://task-frontend-iota-ruby.vercel.app',
+  ...configuredClientUrls,
+])];
+
+export const env = {
+  nodeEnv: process.env.NODE_ENV || 'development',
+  port: Number(process.env.PORT || 5000),
+  mongoUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/taskflow',
+  clientUrls,
   accessSecret: process.env.JWT_ACCESS_SECRET || 'development-access-secret-change-this-32',
   refreshSecret: process.env.JWT_REFRESH_SECRET || 'development-refresh-secret-change-this-32',
   accessExpires: process.env.ACCESS_TOKEN_EXPIRES || '15m',
@@ -29,6 +34,6 @@ export const env = {
     secure: process.env.SMTP_SECURE === 'true' || Number(process.env.SMTP_PORT) === 465,
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
-    from: process.env.SMTP_FROM || 'TaskFlow <yashbca029@gmail.com>'
+    from: process.env.SMTP_FROM || 'TaskFlow <noreply@taskflow.local>'
   }
 };
