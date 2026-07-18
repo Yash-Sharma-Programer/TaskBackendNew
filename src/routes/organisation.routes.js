@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import * as controller from '../controllers/organisation.controller.js';
+import { allowRoles, requireAuth, requireOrganisation } from '../middleware/auth.js';
+import { upload } from '../middleware/upload.js';
+import { validate } from '../middleware/validate.js';
+import { invitationSchema, organisationSchema } from '../validators/domain.validators.js';
+const router = Router(); router.use(requireAuth);
+router.get('/', controller.list); router.post('/', validate(organisationSchema), controller.create);
+router.get('/:organisationId/activity', requireOrganisation, controller.activity);
+router.get('/:organisationId/members', requireOrganisation, controller.members);
+router.post('/:organisationId/invitations', requireOrganisation, allowRoles('owner', 'admin'), validate(invitationSchema), controller.invite);
+router.patch('/:organisationId/members/:memberId/role', requireOrganisation, allowRoles('owner', 'admin'), controller.changeRole);
+router.delete('/:organisationId/members/:memberId', requireOrganisation, allowRoles('owner', 'admin'), controller.removeMember);
+router.patch('/:organisationId', requireOrganisation, allowRoles('owner', 'admin'), controller.update);
+router.post('/:organisationId/logo', requireOrganisation, allowRoles('owner', 'admin'), upload.single('logo'), controller.uploadLogo);
+router.delete('/:organisationId', requireOrganisation, allowRoles('owner'), controller.remove);
+export default router;

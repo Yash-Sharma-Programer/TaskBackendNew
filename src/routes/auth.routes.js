@@ -1,0 +1,21 @@
+import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
+import * as auth from '../controllers/auth.controller.js';
+import { requireAuth } from '../middleware/auth.js';
+import { upload } from '../middleware/upload.js';
+import { validate } from '../middleware/validate.js';
+import { changePasswordSchema, forgotSchema, loginSchema, registerSchema, resetSchema } from '../validators/auth.validators.js';
+
+const router = Router();
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false, message: { success: false, message: 'Too many authentication attempts. Try again later.', errors: [] } });
+router.post('/register', authLimiter, validate(registerSchema), auth.register);
+router.post('/login', authLimiter, validate(loginSchema), auth.login);
+router.post('/refresh', authLimiter, auth.refresh);
+router.post('/logout', auth.logout);
+router.post('/forgot-password', authLimiter, validate(forgotSchema), auth.forgotPassword);
+router.post('/reset-password', authLimiter, validate(resetSchema), auth.resetPassword);
+router.get('/me', requireAuth, auth.me);
+router.patch('/profile', requireAuth, auth.updateProfile);
+router.post('/avatar', requireAuth, upload.single('avatar'), auth.uploadAvatar);
+router.put('/change-password', requireAuth, validate(changePasswordSchema), auth.changePassword);
+export default router;

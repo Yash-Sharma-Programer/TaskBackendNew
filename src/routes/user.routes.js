@@ -1,0 +1,1 @@
+import { Router } from 'express'; import * as controller from '../controllers/user.controller.js'; import { requireAuth, requireOrganisation } from '../middleware/auth.js'; const router = Router(); router.use(requireAuth, requireOrganisation); router.get('/subscription', controller.subscription); router.get('/:id', controller.getMember); export default router;
