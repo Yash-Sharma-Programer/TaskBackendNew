@@ -38,6 +38,15 @@ const corsOptions = {
 };
 
 export const createApp = (io = null) => {
+  app.use(async (req, res, next) => {
+    try {
+      await connectDatabase();
+      next();
+    } catch (err) {
+      console.error('DB connection failed:', err.message);
+      return res.status(503).json({ success: false, message: 'Database temporarily unavailable' });
+    }
+  });
   const app = express(); app.set('trust proxy', 1);
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(cors(corsOptions));
