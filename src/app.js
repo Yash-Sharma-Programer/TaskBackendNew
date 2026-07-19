@@ -7,6 +7,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import { env } from './config/env.js';
+import { connectDatabase } from './config/db.js';
 import { errorHandler, notFound } from './middleware/error.js';
 import { preventXss } from './middleware/xss.js';
 import authRoutes from './routes/auth.routes.js';
@@ -38,6 +39,11 @@ const corsOptions = {
 };
 
 export const createApp = (io = null) => {
+  const app = express();
+  app.set('trust proxy', 1);
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+  app.use(cors(corsOptions)); // <- CORS attaches first, no matter what happens next
+
   app.use(async (req, res, next) => {
     try {
       await connectDatabase();
@@ -47,9 +53,7 @@ export const createApp = (io = null) => {
       return res.status(503).json({ success: false, message: 'Database temporarily unavailable' });
     }
   });
-  const app = express(); app.set('trust proxy', 1);
-  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-  app.use(cors(corsOptions));
+
   app.use(rateLimit({ windowMs: 60 * 1000, limit: 300, standardHeaders: true, legacyHeaders: false }));
   app.use(express.json({ limit: '1mb' })); app.use(express.urlencoded({ extended: true, limit: '1mb' })); app.use(cookieParser()); app.use(mongoSanitize()); app.use(preventXss);
   if (env.nodeEnv !== 'test') app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
